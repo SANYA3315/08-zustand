@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -20,29 +18,33 @@ interface NotesClientProps {
 
 export default function NotesClient({ initialTag }: NotesClientProps) {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(""); 
+  const [search, setSearch] = useState(""); 
 
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     setPage(1);
-    setSearch(""); 
+    setSearchInput(""); 
   }, [initialTag]);
 
   const activeTag = VALID_TAGS.includes(initialTag) ? initialTag : "";
 
   const { data, isLoading, isError, isFetching } = useQuery<FetchNotesResponse>({
-    queryKey: ["notes", initialTag, page, search], 
+    queryKey: ["notes", initialTag, page, search],
     queryFn: () =>
       fetchNotes({
         tag: activeTag,
         page,
         perPage,
-        search: search,
+        search,
       }),
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60,
   });
-
 
   const handlePageChange = (newPage: number) => {
     if (!data) return;
@@ -52,14 +54,14 @@ export default function NotesClient({ initialTag }: NotesClientProps) {
   };
 
   const handleSearch = (value: string) => {
-    setSearch(value);
+    setSearchInput(value); 
     setPage(1);
   };
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox onSearch={handleSearch} initialValue={search} />
+        <SearchBox onSearch={handleSearch} initialValue={searchInput} />
 
         {data && data.totalPages > 1 && (
           <Pagination
@@ -79,9 +81,7 @@ export default function NotesClient({ initialTag }: NotesClientProps) {
       {!isLoading && !isError && data && data.notes.length > 0 && (
         <>
           <NoteList notes={data.notes} />
-          {isFetching && (
-            <div className={css.fetchingLoader}>Updating...</div>
-          )}
+          {isFetching && <div className={css.fetchingLoader}>Updating...</div>}
         </>
       )}
 
